@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jump to Solutions</title>
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Oswald:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #b5a99a;
+      background-image:
+        repeating-linear-gradient(45deg, rgba(0,0,0,0.04) 0, rgba(0,0,0,0.04) 1px, transparent 0, transparent 50%),
+        repeating-linear-gradient(-45deg, rgba(0,0,0,0.04) 0, rgba(0,0,0,0.04) 1px, transparent 0, transparent 50%);
+      background-size: 8px 8px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 30px 16px 50px;
+      font-family: 'Oswald', sans-serif;
+    }
+
+    /* ── MAT ── */
+    .mat {
+      background: #f0f4f7;
+      background-image:
+        repeating-linear-gradient(0deg, rgba(0,0,0,0.018) 0, rgba(0,0,0,0.018) 1px, transparent 1px, transparent 6px),
+        repeating-linear-gradient(90deg, rgba(0,0,0,0.018) 0, rgba(0,0,0,0.018) 1px, transparent 1px, transparent 6px);
+      border-radius: 6px;
+      box-shadow:
+        0 2px 0 #ccc,
+        0 4px 0 #bbb,
+        0 6px 0 #aaa,
+        0 8px 30px rgba(0,0,0,0.35);
+      width: 100%;
+      max-width: 480px;
+      padding: 28px 22px 22px;
+      position: relative;
+    }
+
+    /* ── TITLE ── */
+    .mat-title {
+      font-family: 'Permanent Marker', cursive;
+      font-size: clamp(2rem, 7vw, 2.8rem);
+      text-align: center;
+      color: #1a1a1a;
+      line-height: 1.05;
+      margin-bottom: 4px;
+      letter-spacing: -0.5px;
+    }
+
+    .title-rule {
+      border: none;
+      border-top: 3px solid #2a2a2a;
+      margin: 10px 0 16px;
+    }
+
+    /* ── GRID ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin-bottom: 18px;
+    }
+
+    .cell {
+      border-radius: 4px;
+      padding: 10px 7px;
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-family: 'Oswald', sans-serif;
+      font-weight: 700;
+      font-size: clamp(0.72rem, 2.4vw, 0.88rem);
+      color: #1c1c1c;
+      text-transform: uppercase;
+      line-height: 1.2;
+      letter-spacing: 0.3px;
+      position: relative;
+      transition: transform 0.08s ease;
+      user-select: none;
+    }
+
+    .cell::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 4px;
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.35);
+      pointer-events: none;
+    }
+
+    .cell.blue   { background: #6fa0c8; }
+    .cell.green  { background: #82b84a; }
+    .cell.purple { background: #9486c0; }
+
+    .cell.active {
+      transform: scale(1.06);
+      outline: 4px solid #ffe600;
+      outline-offset: 1px;
+      box-shadow: 0 0 0 6px rgba(255,230,0,0.35);
+      z-index: 1;
+    }
+
+    .cell.winner {
+      transform: scale(1.08);
+      z-index: 2;
+      animation: winnerPulse 0.6s ease-in-out infinite alternate;
+    }
+
+    @keyframes winnerPulse {
+      from {
+        outline: 4px solid #ffcc00;
+        outline-offset: 1px;
+        box-shadow: 0 0 12px 4px rgba(255,180,0,0.55);
+      }
+      to {
+        outline: 5px solid #ff8800;
+        outline-offset: 2px;
+        box-shadow: 0 0 22px 8px rgba(255,100,0,0.45);
+      }
+    }
+
+    /* ── BOTTOM PANEL (sits below the grid, swaps between states) ── */
+    .bottom {
+      border-top: 3px solid #2a2a2a;
+      padding-top: 14px;
+    }
+
+    /* ── STATE: start ── */
+    #state-start {
+      text-align: center;
+      cursor: pointer;
+    }
+
+    #state-start:hover .start-label { color: #444; }
+    #state-start:hover .footprints svg { fill: #5a8aad; }
+
+    .start-label {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 1.7rem;
+      color: #1c1c1c;
+      margin-bottom: 10px;
+      transition: color 0.15s;
+    }
+
+    .footprints {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+    }
+
+    .footprints svg {
+      width: 38px;
+      height: 52px;
+      fill: #6fa0c8;
+      transition: fill 0.15s;
+    }
+
+    /* ── STATE: form ── */
+    #state-form { display: none; }
+
+    .input-label {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 0.95rem;
+      color: #444;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 2px solid #aaa;
+      border-radius: 4px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.95rem;
+      color: #222;
+      background: rgba(255,255,255,0.65);
+      resize: vertical;
+      min-height: 68px;
+      outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 10px;
+    }
+
+    textarea:focus { border-color: #6fa0c8; }
+    textarea::placeholder { color: #999; font-weight: 400; }
+
+    /* ── STATE: result ── */
+    #state-result { display: none; }
+
+    .result-inner {
+      text-align: center;
+      background: rgba(255,255,255,0.55);
+      border: 2px dashed #aaa;
+      border-radius: 4px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .result-label {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .result-answer {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 1.5rem;
+      color: #1c1c1c;
+    }
+
+    /* ── SHARED BUTTON ── */
+    .action-btn {
+      width: 100%;
+      padding: 13px 10px;
+      background: #222;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-family: 'Permanent Marker', cursive;
+      font-size: 1.35rem;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #000, 0 5px 8px rgba(0,0,0,0.25);
+      transition: transform 0.08s, box-shadow 0.08s, background 0.1s;
+    }
+
+    .action-btn:hover:not(:disabled) { background: #3a3a3a; }
+
+    .action-btn:active:not(:disabled) {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #000, 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .action-btn:disabled {
+      background: #888;
+      cursor: not-allowed;
+      box-shadow: 0 2px 0 #555;
+    }
+
+    /* ── TRANSITIONS ── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .fade-in { animation: fadeIn 0.25s ease; }
+  </style>
+</head>
+<body>
+
+<div class="mat">
+  <div class="mat-title">Jump<br>to<br>Solutions</div>
+  <hr class="title-rule" />
+
+  <div class="grid" id="grid"></div>
+
+  <div class="bottom">
+
+    <!-- STATE 1: start -->
+    <div id="state-start">
+      <div class="start-label">START</div>
+      <div class="footprints">
+        <svg viewBox="0 0 60 85" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="30" cy="58" rx="22" ry="26" />
+          <ellipse cx="12" cy="28" rx="7"  ry="9" />
+          <ellipse cx="22" cy="20" rx="7"  ry="9" />
+          <ellipse cx="33" cy="18" rx="7"  ry="9" />
+          <ellipse cx="44" cy="21" rx="6"  ry="8" />
+          <ellipse cx="52" cy="30" rx="5"  ry="7" />
+        </svg>
+        <svg viewBox="0 0 60 85" xmlns="http://www.w3.org/2000/svg" style="transform:scaleX(-1)">
+          <ellipse cx="30" cy="58" rx="22" ry="26" />
+          <ellipse cx="12" cy="28" rx="7"  ry="9" />
+          <ellipse cx="22" cy="20" rx="7"  ry="9" />
+          <ellipse cx="33" cy="18" rx="7"  ry="9" />
+          <ellipse cx="44" cy="21" rx="6"  ry="8" />
+          <ellipse cx="52" cy="30" rx="5"  ry="7" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- STATE 2: problem form -->
+    <div id="state-form">
+      <label class="input-label" for="problem">What's your UX problem?</label>
+      <textarea id="problem" placeholder="e.g. Users drop off during checkout…"></textarea>
+      <button class="action-btn" id="jumpBtn">JUMP TO SOLUTION!</button>
+    </div>
+
+    <!-- STATE 3: result -->
+    <div id="state-result">
+      <div class="result-inner">
+        <div class="result-label">The solution is obviously…</div>
+        <div class="result-answer" id="resultAnswer"></div>
+      </div>
+      <button class="action-btn" id="againBtn">JUMP AGAIN</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const OPTIONS = [
+    { text: "Add an AI agent",         weight: 13, color: "blue"   },
+    { text: "Vibe code it",            weight: 13, color: "green"  },
+    { text: "Dark mode",               weight:  8, color: "purple" },
+    { text: "Put it in the backlog",   weight:  8, color: "green"  },
+    { text: "A/B test it",             weight:  8, color: "purple" },
+    { text: "Onboarding tour",         weight:  8, color: "purple" },
+    { text: "Build a dashboard",       weight:  5, color: "blue"   },
+    { text: "Freemium model",          weight:  5, color: "purple" },
+    { text: "Notifications",           weight:  5, color: "blue"   },
+    { text: "Social sharing",          weight:  5, color: "green"  },
+    { text: "Redesign the homepage",   weight:  5, color: "purple" },
+    { text: "Make it a setting",       weight:  3, color: "blue"   },
+  ];
+
+  for (let i = OPTIONS.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [OPTIONS[i], OPTIONS[j]] = [OPTIONS[j], OPTIONS[i]];
+  }
+
+  const grid = document.getElementById('grid');
+  const cells = OPTIONS.map((opt, i) => {
+    const el = document.createElement('div');
+    el.className = `cell ${opt.color}`;
+    el.textContent = opt.text;
+    grid.appendChild(el);
+    return el;
+  });
+
+  const stateStart  = document.getElementById('state-start');
+  const stateForm   = document.getElementById('state-form');
+  const stateResult = document.getElementById('state-result');
+
+  function show(el) {
+    el.style.display = 'block';
+    el.classList.add('fade-in');
+    el.addEventListener('animationend', () => el.classList.remove('fade-in'), { once: true });
+  }
+
+  function hide(el) { el.style.display = 'none'; }
+
+  function setState(name) {
+    hide(stateStart);
+    hide(stateForm);
+    hide(stateResult);
+    if (name === 'start')  show(stateStart);
+    if (name === 'form')   show(stateForm);
+    if (name === 'result') show(stateResult);
+  }
+
+  // Start is visible by default; form + result start hidden
+  hide(stateForm);
+  hide(stateResult);
+
+  stateStart.addEventListener('click', () => {
+    setState('form');
+    document.getElementById('problem').focus();
+  });
+
+  function weightedPick() {
+    const total = OPTIONS.reduce((s, o) => s + o.weight, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < OPTIONS.length; i++) {
+      r -= OPTIONS[i].weight;
+      if (r <= 0) return i;
+    }
+    return OPTIONS.length - 1;
+  }
+
+  function clearHighlights() {
+    cells.forEach(c => c.classList.remove('active', 'winner'));
+  }
+
+  let timer = null;
+
+  document.getElementById('problem').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      document.getElementById('jumpBtn').click();
+    }
+  });
+
+  document.getElementById('jumpBtn').addEventListener('click', () => {
+    const problem = document.getElementById('problem').value.trim();
+    if (!problem) {
+      const ta = document.getElementById('problem');
+      ta.focus();
+      ta.style.borderColor = '#e05';
+      setTimeout(() => ta.style.borderColor = '', 600);
+      return;
+    }
+
+    clearTimeout(timer);
+    clearHighlights();
+
+    const btn = document.getElementById('jumpBtn');
+    btn.disabled = true;
+
+    const winner = weightedPick();
+    let step = 0;
+    const FAST_STEPS  = 18;
+    const SLOW_STEPS  = 10;
+    const TOTAL_STEPS = FAST_STEPS + SLOW_STEPS;
+
+    function tick() {
+      clearHighlights();
+      if (step < TOTAL_STEPS) {
+        const idx = step < FAST_STEPS
+          ? Math.floor(Math.random() * OPTIONS.length)
+          : (winner + (TOTAL_STEPS - step)) % OPTIONS.length;
+        cells[idx].classList.add('active');
+
+        const delay = step < FAST_STEPS
+          ? 60 + step * 2
+          : 100 + (step - FAST_STEPS) * 55;
+
+        step++;
+        timer = setTimeout(tick, delay);
+      } else {
+        cells[winner].classList.add('winner');
+        document.getElementById('resultAnswer').textContent = OPTIONS[winner].text;
+        btn.disabled = false;
+        setState('result');
+      }
+    }
+
+    tick();
+  });
+
+  document.getElementById('againBtn').addEventListener('click', () => {
+    clearHighlights();
+    document.getElementById('problem').value = '';
+    setState('form');
+    document.getElementById('problem').focus();
+  });
+</script>
+</body>
+</html>
